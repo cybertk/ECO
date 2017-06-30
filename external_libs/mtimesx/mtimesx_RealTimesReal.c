@@ -6914,13 +6914,13 @@ mxArray *RealScalarTimesReal(mxArray *A, char transa, mwSize m1, mwSize n1,
 			if( debug_message ) {
 				mexPrintf("MTIMESX: Shared data copy\n");
 			}
-            result = mxCreateSharedDataCopy(B);
+            result = mxDuplicateArray(B);
             return result;
         } else if( (Bdims[0] == 1 || Bdims[1] == 1) && (transb == 'T' || (transb == 'C' && Bpi == NULL)) ) {
 						if( debug_message ) {
 				mexPrintf("MTIMESX: Shared data copy\n");
 			}
-            result = mxCreateSharedDataCopy(B);
+            result = mxDuplicateArray(B);
             Cdims = mxMalloc( Bndim * sizeof(*Cdims) );
             for( Cp=2; Cp<Bndim; Cp++) {
                 Cdims[Cp] = Bdims[Cp];

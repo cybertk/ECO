@@ -8,5 +8,5 @@
 if ispc
     mex -lopencv_core242 -lopencv_imgproc242 -L./ -I./ mexResize.cpp MxArray.cpp
 else
-    mex -lopencv_core -lopencv_imgproc -L./ -I./ mexResize.cpp MxArray.cpp
+    mex -lopencv_core -lopencv_imgproc -L/usr/local/conda/envs/ai/lib/ -I./ mexResize.cpp MxArray.cpp
 end

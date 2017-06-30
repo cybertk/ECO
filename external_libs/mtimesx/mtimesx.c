@@ -274,7 +274,6 @@
 
 mxArray *DoubleTimesDouble(mxArray *, char, mxArray *, char);
 mxArray *FloatTimesFloat(mxArray *, char, mxArray *, char);
-mxArray *mxCreateSharedDataCopy(const mxArray *pr);
 char mxArrayToTrans(const mxArray *mx);
 void *myRealloc(void *vp, mwSize_t n);
 void mtimesx_logo(void);

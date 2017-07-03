@@ -106,13 +106,9 @@ catch
     pc = ~isunix ;
 end
 
-if( ismac )
-    disp('building macOS version');
-    mex('mtimesx.c','-DDEFINEUNIX','-L/usr/local/conda/envs/ai/lib', '-lopenblas');
-
-else if( ~pc )
+if( ~pc )
     disp('building linux version');
-    mex('mtimesx.c','-DDEFINEUNIX','-largeArrayDims','-lmwblas');
+    mex('mtimesx.c','-DDEFINEUNIX','-lopenblas');
     return;
 end
 

@@ -4,7 +4,7 @@
 	ignore = dirty
 [submodule "external_libs/pdollar_toolbox"]
 	path = external_libs/pdollar_toolbox
-	url = https://github.com/pdollar/toolbox.git
+	url = https://github.com/cybertk/pdollar_toolbox.git
 	ignore = dirty
 [submodule "external_libs/mtimesx"]
 	path = external_libs/mtimesx

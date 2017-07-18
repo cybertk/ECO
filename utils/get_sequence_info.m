@@ -26,7 +26,8 @@ elseif strcmpi(seq.format, 'vot')
         return;
     end
     
-    init_image = imread(init_image_file);
+    %init_image = imread(init_image_file);
+    init_image = init_image_file;
     
     bb_scale = 1;
     

@@ -13,7 +13,7 @@ elseif strcmpi(seq.format, 'vot')
     if isempty(image_file)
         im = [];
     else
-        im = imread(image_file);
+        im = image_file;
     end
 else
     error('Uknown sequence format');

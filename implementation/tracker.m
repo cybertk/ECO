@@ -74,7 +74,7 @@ global_fparams.use_mexResize = true;
 try
     [~] = mexResize(ones(5,5,3,'uint8'), [3 3], 'auto');
 catch err
-    warning('ECO:tracker', 'Error when using the mexResize function. Using Matlab''s interpolation function instead, which is slower.\nTry to run the compile script in "external_libs/mexResize/".\n\nThe error was:\n%s', getReport(err));
+    %warning('ECO:tracker', 'Error when using the mexResize function. Using Matlab''s interpolation function instead, which is slower.\nTry to run the compile script in "external_libs/mexResize/".\n\nThe error was:\n%s', getReport(err));
     params.use_mexResize = false;
     global_fparams.use_mexResize = false;
 end
@@ -107,19 +107,19 @@ end
 [features, global_fparams, feature_info] = init_features(features, global_fparams, is_color_image, img_sample_sz, 'odd_cells');
 
 % Set feature info
-img_support_sz = feature_info.img_support_sz;
-feature_sz = feature_info.data_sz;
-feature_dim = feature_info.dim;
-num_feature_blocks = length(feature_dim);
+img_support_sz = feature_info.img_support_sz; %[ 164 164]
+feature_sz = feature_info.data_sz; %[ 41 41; 27 27]
+feature_dim = feature_info.dim; % [ 10; 31 ]
+num_feature_blocks = length(feature_dim); % [ 2 ]
 
 % Get feature specific parameters
 feature_params = init_feature_params(features, feature_info);
 feature_extract_info = get_feature_extract_info(features);
 
 % Set the sample feature dimension
-if params.use_projection_matrix
+if params.use_projection_matrix % ECO optimize #1: feature dim reduction
     sample_dim = feature_params.compressed_dim;
-else
+else % original C-COT
     sample_dim = feature_dim;
 end
 
@@ -128,11 +128,11 @@ feature_sz_cell = permute(mat2cell(feature_sz, ones(1,num_feature_blocks), 2), [
 
 % Number of Fourier coefficients to save for each filter layer. This will
 % be an odd number.
-filter_sz = feature_sz + mod(feature_sz+1, 2);
+filter_sz = feature_sz + mod(feature_sz+1, 2); %[ 41 41; 27 27] same as feature_sz
 filter_sz_cell = permute(mat2cell(filter_sz, ones(1,num_feature_blocks), 2), [2 3 1]);
 
 % The size of the label function DFT. Equal to the maximum filter size.
-[output_sz, k1] = max(filter_sz, [], 1);
+[output_sz, k1] = max(filter_sz, [], 1); % [ 41 41 ]
 k1 = k1(1);
 
 % Get the remaining block indices
@@ -140,23 +140,35 @@ block_inds = 1:num_feature_blocks;
 block_inds(k1) = [];
 
 % How much each feature block has to be padded to the obtain output_sz
+% { [ 0 0 ], [ 7 7 ] }
 pad_sz = cellfun(@(filter_sz) (output_sz - filter_sz) / 2, filter_sz_cell, 'uniformoutput', false);
 
 % Compute the Fourier series indices and their transposes
+% ky{1} = -20:20'
+% ky{2} = -13:13'
 ky = cellfun(@(sz) (-ceil((sz(1) - 1)/2) : floor((sz(1) - 1)/2))', filter_sz_cell, 'uniformoutput', false);
+% kx{1} = -20:0
+% kx{2} = -13:0
 kx = cellfun(@(sz) -ceil((sz(2) - 1)/2) : 0, filter_sz_cell, 'uniformoutput', false);
 
 % construct the Gaussian label function using Poisson formula
+% sig_y = [ 0.57282   0.57282 ] 
 sig_y = sqrt(prod(floor(base_target_sz))) * params.output_sigma_factor * (output_sz ./ img_support_sz);
 yf_y = cellfun(@(ky) single(sqrt(2*pi) * sig_y(1) / output_sz(1) * exp(-2 * (pi * sig_y(1) * ky / output_sz(1)).^2)), ky, 'uniformoutput', false);
 yf_x = cellfun(@(kx) single(sqrt(2*pi) * sig_y(2) / output_sz(2) * exp(-2 * (pi * sig_y(2) * kx / output_sz(2)).^2)), kx, 'uniformoutput', false);
 yf = cellfun(@(yf_y, yf_x) cast(yf_y * yf_x, 'like', params.data_type), yf_y, yf_x, 'uniformoutput', false);
 
 % construct cosine window
+% real number size is same as filter_sz
+% size(cos_window{1}) : [41 41]
+% size(cos_window{2}) : [27 27]
 cos_window = cellfun(@(sz) hann(sz(1)+2)*hann(sz(2)+2)', feature_sz_cell, 'uniformoutput', false);
 cos_window = cellfun(@(cos_window) cast(cos_window(2:end-1,2:end-1), 'like', params.data_type), cos_window, 'uniformoutput', false);
 
 % Compute Fourier series of interpolation function
+% size(interp1_fs{1}) :  [ 41 1 ]
+% size(interp1_fs{2}) :  [ 27 1 ]
+% interp2 is the transpose of interp1, i.e. [ 1 41 ] for size(interp2_fs{1})
 [interp1_fs, interp2_fs] = cellfun(@(sz) get_interp_fourier(sz, params), filter_sz_cell, 'uniformoutput', false);
 
 % Get the reg_window_edge parameter

@@ -8,6 +8,7 @@ output_sz = [sz1 sz2];
 
 % Do the grid search step by finding the maximum in the sampled response
 % for each scale.
+% sampled_scores is just the ifft(scores_fs)
 sampled_scores = sample_fs(scores_fs);
 [max_resp_row, max_row] = max(sampled_scores, [], 1);
 [init_max_score, max_col] = max(max_resp_row, [], 2);
@@ -16,6 +17,7 @@ col = max_col(:)';
 row = max_row_perm(sub2ind(size(max_row_perm), col, 1:size(sampled_scores,3)));
 
 % Shift and rescale the coordinate system to [-pi, pi]
+% trans_row = mod(row - 1 + 20, 21)
 trans_row = mod(row - 1 + floor((output_sz(1)-1)/2), output_sz(1)) - floor((output_sz(1)-1)/2);
 trans_col = mod(col - 1 + floor((output_sz(2)-1)/2), output_sz(2)) - floor((output_sz(2)-1)/2);
 init_pos_y = permute(2*pi * trans_row / output_sz(1), [1 3 2]);
@@ -26,6 +28,8 @@ max_pos_y = init_pos_y;
 max_pos_x = init_pos_x;
 
 % construct grid
+% ky=-20:20
+% kx=-20:20'
 ky = -ceil((output_sz(1) - 1)/2) : floor((output_sz(1) - 1)/2);
 kx = (-ceil((output_sz(2) - 1)/2) : floor((output_sz(2) - 1)/2))';
 
